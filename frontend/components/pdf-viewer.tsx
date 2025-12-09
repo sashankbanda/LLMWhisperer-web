@@ -2,7 +2,22 @@
 
 import { AlertTriangle, FileText, Loader2 } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+// import { Document, Page, pdfjs } from "react-pdf";
+let Document: any = null;
+let Page: any = null;
+let pdfjs: any = null;
+
+if (typeof window !== "undefined") {
+  const reactPdf = require("react-pdf");
+  Document = reactPdf.Document;
+  Page = reactPdf.Page;
+  pdfjs = reactPdf.pdfjs;
+}
+if (typeof window !== "undefined") {
+  const PDF_WORKER_SRC = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+  pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
+}
+
 
 import HighlightOverlay from "@/components/highlight-overlay";
 

@@ -18,7 +18,22 @@ type UploadResponse = {
   whisper_hash?: string;
 };
 
-const ACCEPTED_MIME_TYPES = ["application/pdf"];
+// const ACCEPTED_MIME_TYPES = ["application/pdf"];
+// Allow everything
+const ACCEPTED_MIME_TYPES = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/tiff",
+  "text/plain",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+];
+
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
 async function readFileAsDataUrl(file: File): Promise<string> {
@@ -190,7 +205,7 @@ export default function UploadBox() {
           ref={inputRef}
           id="file-upload"
           type="file"
-          accept={ACCEPTED_MIME_TYPES.join(",")}
+          accept=""
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           onChange={(event) => handleFiles(event.target.files)}
         />

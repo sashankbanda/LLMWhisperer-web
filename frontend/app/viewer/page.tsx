@@ -5,12 +5,21 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/button";
-import PDFViewer from "@/components/pdf-viewer";
+// import PDFViewer from "@/components/pdf-viewer";
+import dynamic from "next/dynamic";
+
+const PDFViewer = dynamic(() => import("@/components/pdf-viewer"), {
+  ssr: false,
+});
+
+import ImageViewer from "@/components/image-viewer";
 import TextPanel from "@/components/text-panel";
 import {
     EXTRACTION_FILE_STORAGE_KEY,
     EXTRACTION_STORAGE_KEY,
 } from "@/lib/constants";
+
+
 
 type StoredExtraction = {
   text: string;
@@ -164,10 +173,15 @@ export default function ViewerPage() {
             </h2>
           </div>
           <div className="flex-1 overflow-auto px-2 py-4">
-            <PDFViewer
-              fileUrl={state.fileDataUrl}
-              highlights={state.highlights}
-            />
+            {state.mimeType === "application/pdf" ? (
+              <PDFViewer fileUrl={state.fileDataUrl} highlights={state.highlights} />
+            ) : state.mimeType?.startsWith("image/") ? (
+              <ImageViewer fileUrl={state.fileDataUrl!} />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground p-6">
+                No preview available for this file type.
+              </div>
+            )}              
           </div>
         </section>
 
