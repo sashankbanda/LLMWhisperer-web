@@ -1,0 +1,74 @@
+# ---- OS / Editor ----
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+~$*
+.vscode/
+.idea/
+
+# ---- Environment & Secrets ----
+.env
+.env.*
+*.env.local
+*.env.development
+*.env.production
+*.env.test
+
+# ---- Python / Backend ----
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+.python-version
+.venv/
+venv/
+ENV/
+env/
+instance/
+htmlcov/
+.coverage*
+dist/
+build/
+*.egg-info/
+
+# Backend generated assets
+backend/app/inputfiles/*
+backend/app/outputfiles/*
+!backend/app/inputfiles/.gitkeep
+!backend/app/outputfiles/.gitkeep
+
+# ---- Node / Frontend ----
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.next/
+.vercel/
+.turbo/
+.next-static/
+dist-ssr/
+out/
+coverage/
+
+# Frontend build artifacts
+frontend/.next/
+frontend/out/
+
+# ---- Logs ----
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---- Misc ----
+*.orig
+*.rej
+*.bak
+**/.DS_Store
