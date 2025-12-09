@@ -119,7 +119,7 @@ export default function UploadBox() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:8003/extract", {
+      const response = await fetch("http://localhost:8003/extract/", {
         method: "POST",
         body: formData,
       });
