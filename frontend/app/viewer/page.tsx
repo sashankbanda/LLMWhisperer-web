@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, RotateCcw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
+import { Button } from "@/components/button";
 import PDFViewer from "@/components/pdf-viewer";
 import TextPanel from "@/components/text-panel";
-import { Button } from "@/components/button";
 import {
-  EXTRACTION_FILE_STORAGE_KEY,
-  EXTRACTION_STORAGE_KEY,
+    EXTRACTION_FILE_STORAGE_KEY,
+    EXTRACTION_STORAGE_KEY,
 } from "@/lib/constants";
 
 type StoredExtraction = {
@@ -156,14 +156,14 @@ export default function ViewerPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-6 lg:flex-row">
-        <section className="flex flex-1 flex-col rounded-2xl border bg-background shadow-sm">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 min-h-0 flex-col gap-6 px-6 py-6 lg:flex-row lg:items-stretch">
+        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-background shadow-sm">
           <div className="border-b px-5 py-3">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Document preview
             </h2>
           </div>
-          <div className="flex-1 overflow-hidden px-2 py-4">
+          <div className="flex-1 overflow-auto px-2 py-4">
             <PDFViewer
               fileUrl={state.fileDataUrl}
               highlights={state.highlights}
@@ -171,7 +171,7 @@ export default function ViewerPage() {
           </div>
         </section>
 
-        <aside className="flex w-full max-w-xl flex-1 flex-col rounded-2xl border bg-background shadow-sm">
+        <aside className="flex w-full max-w-xl flex-1 min-h-0 flex-col overflow-hidden rounded-2xl border bg-background shadow-sm">
           <div className="border-b px-5 py-3">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Extracted text

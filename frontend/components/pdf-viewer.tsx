@@ -1,8 +1,8 @@
 "use client";
 
+import { AlertTriangle, FileText, Loader2 } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { AlertTriangle, FileText, Loader2 } from "lucide-react";
 
 import HighlightOverlay from "@/components/highlight-overlay";
 
@@ -24,7 +24,7 @@ type PageMetrics = {
   renderedHeight: number;
 };
 
-const PDF_WORKER_SRC = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+const PDF_WORKER_SRC = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 if (typeof window !== "undefined" && pdfjs.GlobalWorkerOptions.workerSrc !== PDF_WORKER_SRC) {
   pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
@@ -154,6 +154,24 @@ function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>) {
   return width;
 }
 
+function decodePdfDataUrl(dataUrl: string): Uint8Array | null {
+  try {
+    const commaIndex = dataUrl.indexOf(",");
+    if (commaIndex === -1) return null;
+    const base64 = dataUrl.slice(commaIndex + 1);
+    const binary = atob(base64);
+    const length = binary.length;
+    const buffer = new Uint8Array(length);
+    for (let index = 0; index < length; index += 1) {
+      buffer[index] = binary.charCodeAt(index);
+    }
+    return buffer;
+  } catch (error) {
+    console.warn("Failed to decode PDF data URL", error);
+    return null;
+  }
+}
+
 function PDFViewer({ fileUrl, highlights }: PDFViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [numPages, setNumPages] = useState(0);
@@ -166,6 +184,17 @@ function PDFViewer({ fileUrl, highlights }: PDFViewerProps) {
     () => groupByPage(normalizedHighlights),
     [normalizedHighlights]
   );
+
+  const fileSource = useMemo(() => {
+    if (!fileUrl) return null;
+    if (fileUrl.startsWith("data:application/pdf")) {
+      const decoded = decodePdfDataUrl(fileUrl);
+      if (decoded) {
+        return { data: decoded };
+      }
+    }
+    return fileUrl;
+  }, [fileUrl]);
 
   const containerWidth = useContainerWidth(containerRef);
   const computedWidth = containerWidth > 0 ? containerWidth - 16 : 640;
@@ -192,7 +221,7 @@ function PDFViewer({ fileUrl, highlights }: PDFViewerProps) {
     }));
   };
 
-  if (!fileUrl) {
+  if (!fileSource) {
     return (
       <div className="flex h-full min-h-[420px] items-center justify-center rounded-xl border border-dashed bg-muted/30 px-6">
         <div className="flex flex-col items-center gap-3 text-center">
@@ -214,8 +243,8 @@ function PDFViewer({ fileUrl, highlights }: PDFViewerProps) {
       className="relative flex h-full flex-col items-center gap-4 overflow-auto"
     >
       <Document
-        key={fileUrl}
-        file={fileUrl}
+        key={typeof fileSource === "string" ? fileSource : "embedded"}
+        file={fileSource}
         onLoadSuccess={handleDocumentLoad}
         loading={
           <div className="flex h-[420px] items-center justify-center">
