@@ -24,16 +24,16 @@ export default function TextPanel({ text }: TextPanelProps) {
   }
 
   return (
-    <div className="flex h-full flex-1 flex-col overflow-hidden">
-      <div className="flex-1 space-y-4 overflow-auto px-5 py-4 text-sm leading-relaxed">
+    <div className="p-4">
+      <div className="space-y-4 text-sm leading-relaxed">
         {paragraphs.length > 0
           ? paragraphs.map((paragraph, index) => (
-              <p key={`${index}-${paragraph.slice(0, 10)}`} className="whitespace-pre-line text-left">
+              <p key={`${index}-${paragraph.slice(0, 10)}`} className="whitespace-pre-wrap break-words text-left">
                 {paragraph}
               </p>
             ))
           : (
-              <p className="whitespace-pre-line text-left">{text}</p>
+              <p className="whitespace-pre-wrap break-words text-left">{text}</p>
             )}
       </div>
     </div>

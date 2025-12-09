@@ -15,8 +15,8 @@ const PDFViewer = dynamic(() => import("@/components/pdf-viewer"), {
 import ImageViewer from "@/components/image-viewer";
 import TextPanel from "@/components/text-panel";
 import {
-    EXTRACTION_FILE_STORAGE_KEY,
-    EXTRACTION_STORAGE_KEY,
+  EXTRACTION_FILE_STORAGE_KEY,
+  EXTRACTION_STORAGE_KEY,
 } from "@/lib/constants";
 
 
@@ -131,8 +131,8 @@ export default function ViewerPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/20">
-      <header className="border-b bg-background/95 backdrop-blur">
+    <div className="flex h-screen flex-col bg-muted/20">
+      <header className="shrink-0 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-6 py-4">
           <div className="flex items-center gap-3">
             <Button
@@ -165,14 +165,15 @@ export default function ViewerPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 min-h-0 flex-col gap-6 px-6 py-6 lg:flex-row lg:items-stretch">
-        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-background shadow-sm">
-          <div className="border-b px-5 py-3">
+      <main className="flex flex-1 min-h-0 gap-4 px-4 py-4 lg:px-6">
+        {/* PDF Preview Panel - fixed size with both scrolls */}
+        <section className="flex flex-[2] min-h-0 min-w-0 flex-col rounded-2xl border bg-background shadow-sm">
+          <div className="shrink-0 border-b px-5 py-3">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Document preview
             </h2>
           </div>
-          <div className="flex-1 overflow-auto px-2 py-4">
+          <div className="flex-1 min-h-0 min-w-0 overflow-auto">
             {state.mimeType === "application/pdf" ? (
               <PDFViewer fileUrl={state.fileDataUrl} highlights={state.highlights} />
             ) : state.mimeType?.startsWith("image/") ? (
@@ -185,13 +186,16 @@ export default function ViewerPage() {
           </div>
         </section>
 
-        <aside className="flex w-full max-w-xl flex-1 min-h-0 flex-col overflow-hidden rounded-2xl border bg-background shadow-sm">
-          <div className="border-b px-5 py-3">
+        {/* Text Panel - fixed size with both scrolls */}
+        <aside className="flex flex-1 min-h-0 min-w-0 flex-col rounded-2xl border bg-background shadow-sm">
+          <div className="shrink-0 border-b px-5 py-3">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Extracted text
             </h2>
           </div>
-          <TextPanel text={state.text} />
+          <div className="flex-1 min-h-0 min-w-0 overflow-auto">
+            <TextPanel text={state.text} />
+          </div>
         </aside>
       </main>
     </div>

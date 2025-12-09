@@ -1,172 +1,15 @@
 "use client";
 
-import { AlertTriangle, FileText, Loader2 } from "lucide-react";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
-// import { Document, Page, pdfjs } from "react-pdf";
-let Document: any = null;
-let Page: any = null;
-let pdfjs: any = null;
+import { ChevronLeft, ChevronRight, FileText, Loader2 } from "lucide-react";
+import * as pdfjsLib from "pdfjs-dist/build/pdf";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-if (typeof window !== "undefined") {
-  const reactPdf = require("react-pdf");
-  Document = reactPdf.Document;
-  Page = reactPdf.Page;
-  pdfjs = reactPdf.pdfjs;
-}
-if (typeof window !== "undefined") {
-  const PDF_WORKER_SRC = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-  pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
-}
-
-
-import HighlightOverlay from "@/components/highlight-overlay";
-
-import "react-pdf/dist/Page/TextLayer.css";
-
-type NormalizedHighlight = {
-  id: string;
-  pageNumber: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-type PageMetrics = {
-  originalWidth: number;
-  originalHeight: number;
-  renderedWidth: number;
-  renderedHeight: number;
-};
-
-const PDF_WORKER_SRC = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-if (typeof window !== "undefined" && pdfjs.GlobalWorkerOptions.workerSrc !== PDF_WORKER_SRC) {
-  pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
-}
-
-function normalizeHighlights(input: unknown): NormalizedHighlight[] {
-  if (!input) return [];
-
-  const normalized: NormalizedHighlight[] = [];
-
-  const entries = Array.isArray(input)
-    ? input.map((value, index) => [String(index), value] as const)
-    : typeof input === "object" && input !== null
-      ? Object.entries(input as Record<string, unknown>)
-      : [];
-
-  for (const [key, value] of entries) {
-    if (typeof value !== "object" || value === null) continue;
-
-    const highlight = value as Record<string, unknown>;
-    const pageNumber = Number(highlight.page_number ?? highlight.page ?? 1) || 1;
-
-    const boxesSource = highlight.bounding_boxes ?? highlight.boxes ?? highlight.box;
-    const boxes = Array.isArray(boxesSource)
-      ? boxesSource
-      : boxesSource
-        ? [boxesSource]
-        : [highlight];
-
-    boxes.forEach((box, index) => {
-      if (typeof box !== "object" || box === null) return;
-      const record = box as Record<string, unknown>;
-
-      const readNumber = (candidate: unknown): number | null => {
-        if (typeof candidate === "number" && Number.isFinite(candidate)) {
-          return candidate;
-        }
-        if (typeof candidate === "string" && candidate.trim() !== "") {
-          const parsed = Number(candidate);
-          if (Number.isFinite(parsed)) {
-            return parsed;
-          }
-        }
-        return null;
-      };
-
-      const xCandidate =
-        record.base_x ??
-        record.x ??
-        record.left ??
-        record.start_x ??
-        record.startX;
-      const yCandidate =
-        record.base_y ??
-        record.y ??
-        record.top ??
-        record.start_y ??
-        record.startY;
-      const widthCandidate =
-        record.width ??
-        record.w ??
-        (typeof record.size === "object" && record.size !== null
-          ? (record.size as Record<string, unknown>).width
-          : undefined);
-      const heightCandidate =
-        record.height ??
-        record.h ??
-        (typeof record.size === "object" && record.size !== null
-          ? (record.size as Record<string, unknown>).height
-          : undefined);
-
-      const x = readNumber(xCandidate) ?? 0;
-      const y = readNumber(yCandidate) ?? 0;
-      const width = readNumber(widthCandidate) ?? 0;
-      const height = readNumber(heightCandidate) ?? 0;
-
-      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-
-      normalized.push({
-        id: `${key}-${index}`,
-        pageNumber,
-        x,
-        y,
-        width,
-        height,
-      });
-    });
-  }
-
-  return normalized;
-}
-
-function groupByPage(highlights: NormalizedHighlight[]): Record<number, NormalizedHighlight[]> {
-  return highlights.reduce<Record<number, NormalizedHighlight[]>>((acc, item) => {
-    if (!acc[item.pageNumber]) {
-      acc[item.pageNumber] = [];
-    }
-    acc[item.pageNumber].push(item);
-    return acc;
-  }, {});
-}
+// Worker from public folder
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.js";
 
 interface PDFViewerProps {
   fileUrl: string | null;
   highlights?: unknown;
-}
-
-function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>) {
-  const [width, setWidth] = useState(640);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) {
-        setWidth(entry.contentRect.width);
-      }
-    });
-
-    observer.observe(element);
-
-    return () => observer.disconnect();
-  }, [ref]);
-
-  return width;
 }
 
 function decodePdfDataUrl(dataUrl: string): Uint8Array | null {
@@ -177,8 +20,8 @@ function decodePdfDataUrl(dataUrl: string): Uint8Array | null {
     const binary = atob(base64);
     const length = binary.length;
     const buffer = new Uint8Array(length);
-    for (let index = 0; index < length; index += 1) {
-      buffer[index] = binary.charCodeAt(index);
+    for (let i = 0; i < length; i++) {
+      buffer[i] = binary.charCodeAt(i);
     }
     return buffer;
   } catch (error) {
@@ -187,136 +30,184 @@ function decodePdfDataUrl(dataUrl: string): Uint8Array | null {
   }
 }
 
-function PDFViewer({ fileUrl, highlights }: PDFViewerProps) {
+export default function PdfViewer({ fileUrl, highlights }: PDFViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [numPages, setNumPages] = useState(0);
-  const [pageMetrics, setPageMetrics] = useState<Record<number, PageMetrics>>({});
-  const normalizedHighlights = useMemo(
-    () => normalizeHighlights(highlights),
-    [highlights]
-  );
-  const highlightsByPage = useMemo(
-    () => groupByPage(normalizedHighlights),
-    [normalizedHighlights]
-  );
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
-  const fileSource = useMemo(() => {
-    if (!fileUrl) return null;
-    if (fileUrl.startsWith("data:application/pdf")) {
-      const decoded = decodePdfDataUrl(fileUrl);
-      if (decoded) {
-        return { data: decoded };
-      }
+  const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const scale = 1.5;
+
+  // Load PDF
+  useEffect(() => {
+    if (!fileUrl) {
+      setIsLoading(false);
+      return;
     }
-    return fileUrl;
+
+    const loadPdf = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        let source: { data: Uint8Array } | string;
+
+        if (fileUrl.startsWith("data:application/pdf")) {
+          const decoded = decodePdfDataUrl(fileUrl);
+          if (!decoded) {
+            throw new Error("Failed to decode PDF data");
+          }
+          source = { data: decoded };
+        } else {
+          source = fileUrl;
+        }
+
+        const pdf = await pdfjsLib.getDocument(source).promise;
+        setPdfDoc(pdf);
+        setTotalPages(pdf.numPages);
+        setCurrentPage(1);
+      } catch (err) {
+        console.error("Failed to load PDF:", err);
+        setError("Failed to load PDF document");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPdf();
   }, [fileUrl]);
 
-  const containerWidth = useContainerWidth(containerRef);
-  const computedWidth = containerWidth > 0 ? containerWidth - 16 : 640;
-  const pageWidth = Math.max(Math.min(computedWidth, 900), 280);
+  // Render page
+  useEffect(() => {
+    if (!pdfDoc || !canvasRef.current) return;
 
-  const handleDocumentLoad = ({ numPages: total }: { numPages: number }) => {
-    setNumPages(total);
-  };
+    // Cancel any ongoing render task before starting a new one
+    if (renderTaskRef.current) {
+      renderTaskRef.current.cancel();
+      renderTaskRef.current = null;
+    }
 
-  const handlePageRender = (pageNumber: number) => (page: {
-    getViewport: (options: { scale: number }) => { width: number; height: number };
-  }) => {
-    const viewport = page.getViewport({ scale: 1 });
-    const width = pageWidth > 0 ? pageWidth : viewport.width;
-    const scale = width / viewport.width;
-    setPageMetrics((prev) => ({
-      ...prev,
-      [pageNumber]: {
-        originalWidth: viewport.width,
-        originalHeight: viewport.height,
-        renderedWidth: width,
-        renderedHeight: viewport.height * scale,
-      },
-    }));
-  };
+    const renderPage = async () => {
+      try {
+        const page = await pdfDoc.getPage(currentPage);
+        const viewport = page.getViewport({ scale });
 
-  if (!fileSource) {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        const renderTask = page.render({ canvasContext: ctx, viewport });
+        renderTaskRef.current = renderTask;
+
+        await renderTask.promise;
+        renderTaskRef.current = null;
+      } catch (err: unknown) {
+        // Ignore cancellation errors
+        if (err instanceof Error && err.message.includes("cancelled")) {
+          return;
+        }
+        console.error("Failed to render page:", err);
+      }
+    };
+
+    renderPage();
+
+    // Cleanup: cancel render task on unmount or before re-render
+    return () => {
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+        renderTaskRef.current = null;
+      }
+    };
+  }, [pdfDoc, currentPage, scale]);
+
+  const goToPrevPage = useCallback(() => {
+    setCurrentPage((p) => Math.max(1, p - 1));
+  }, []);
+
+  const goToNextPage = useCallback(() => {
+    setCurrentPage((p) => Math.min(totalPages, p + 1));
+  }, [totalPages]);
+
+  if (!fileUrl) {
     return (
-      <div className="flex h-full min-h-[420px] items-center justify-center rounded-xl border border-dashed bg-muted/30 px-6">
+      <div className="flex h-full min-h-[400px] items-center justify-center rounded-xl border border-dashed bg-muted/30 px-6">
         <div className="flex flex-col items-center gap-3 text-center">
           <FileText className="size-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            No PDF preview available for this document session.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Try uploading the document again to restore the preview.
+            No PDF preview available.
           </p>
         </div>
       </div>
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex h-full min-h-[400px] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full min-h-[400px] items-center justify-center rounded-xl border border-dashed bg-muted/30 px-6">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <FileText className="size-8 text-destructive" />
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      ref={containerRef}
-      className="relative flex h-full flex-col items-center gap-4 overflow-auto"
-    >
-      <Document
-        key={typeof fileSource === "string" ? fileSource : "embedded"}
-        file={fileSource}
-        onLoadSuccess={handleDocumentLoad}
-        loading={
-          <div className="flex h-[420px] items-center justify-center">
-            <Loader2 className="size-6 animate-spin text-muted-foreground" />
-          </div>
-        }
-        error={
-          <div className="flex h-[420px] flex-col items-center justify-center gap-3 text-center">
-            <AlertTriangle className="size-6 text-amber-500" />
-            <p className="text-sm font-medium">Unable to load PDF preview</p>
-            <p className="text-xs text-muted-foreground">
-              Please try uploading the document again.
-            </p>
-          </div>
-        }
-        noData={
-          <div className="flex h-[420px] items-center justify-center">
-            <p className="text-sm text-muted-foreground">No PDF data found.</p>
-          </div>
-        }
+    <div className="flex h-full flex-col">
+      {/* Page navigation */}
+      <div className="flex shrink-0 items-center justify-center gap-4 border-b bg-muted/30 px-4 py-2">
+        <button
+          onClick={goToPrevPage}
+          disabled={currentPage <= 1}
+          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        >
+          <ChevronLeft className="size-4" />
+          Prev
+        </button>
+        <span className="text-sm text-muted-foreground">
+          Page <span className="font-medium text-foreground">{currentPage}</span> / {totalPages}
+        </span>
+        <button
+          onClick={goToNextPage}
+          disabled={currentPage >= totalPages}
+          className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        >
+          Next
+          <ChevronRight className="size-4" />
+        </button>
+      </div>
+
+      {/* PDF canvas with both horizontal and vertical scroll */}
+      <div
+        ref={containerRef}
+        className="flex-1 min-h-0 overflow-auto"
       >
-        {Array.from({ length: numPages }, (_, index) => {
-          const pageNumber = index + 1;
-          const pageHighlight = highlightsByPage[pageNumber] ?? [];
-          const metrics = pageMetrics[pageNumber];
-          const renderedHighlights = metrics
-            ? pageHighlight.map((item) => {
-                const scaleX = metrics.renderedWidth / metrics.originalWidth;
-                const scaleY = metrics.renderedHeight / metrics.originalHeight;
-
-                return {
-                  id: item.id,
-                  left: item.x * scaleX,
-                  top: item.y * scaleY,
-                  width: item.width * scaleX,
-                  height: item.height * scaleY,
-                };
-              })
-            : [];
-
-          return (
-            <div key={pageNumber} className="relative w-full">
-              <Page
-                pageNumber={pageNumber}
-                width={pageWidth > 0 ? pageWidth : undefined}
-                onRenderSuccess={handlePageRender(pageNumber)}
-                className="!mx-auto !mt-4 !mb-2"
-              />
-              {metrics && renderedHighlights.length > 0 && (
-                <HighlightOverlay boxes={renderedHighlights} />
-              )}
-            </div>
-          );
-        })}
-      </Document>
+        <div className="p-4">
+          <canvas
+            ref={canvasRef}
+            className="block shadow-lg"
+          />
+        </div>
+      </div>
     </div>
   );
 }
-
-export default memo(PDFViewer);
