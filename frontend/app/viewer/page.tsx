@@ -166,8 +166,8 @@ export default function ViewerPage() {
       </header>
 
       <main className="flex flex-1 min-h-0 gap-4 px-4 py-4 lg:px-6">
-        {/* PDF Preview Panel - fixed size with both scrolls */}
-        <section className="flex flex-[2] min-h-0 min-w-0 flex-col rounded-2xl border bg-background shadow-sm">
+        {/* PDF Preview Panel - equal width with both scrolls */}
+        <section className="flex flex-1 min-h-0 min-w-0 flex-col rounded-2xl border bg-background shadow-sm">
           <div className="shrink-0 border-b px-5 py-3">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Document preview
@@ -186,7 +186,7 @@ export default function ViewerPage() {
           </div>
         </section>
 
-        {/* Text Panel - fixed size with both scrolls */}
+        {/* Text Panel - equal width with both scrolls */}
         <aside className="flex flex-1 min-h-0 min-w-0 flex-col rounded-2xl border bg-background shadow-sm">
           <div className="shrink-0 border-b px-5 py-3">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">

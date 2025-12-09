@@ -25,17 +25,7 @@ export default function TextPanel({ text }: TextPanelProps) {
 
   return (
     <div className="p-4">
-      <div className="space-y-4 text-sm leading-relaxed">
-        {paragraphs.length > 0
-          ? paragraphs.map((paragraph, index) => (
-              <p key={`${index}-${paragraph.slice(0, 10)}`} className="whitespace-pre-wrap break-words text-left">
-                {paragraph}
-              </p>
-            ))
-          : (
-              <p className="whitespace-pre-wrap break-words text-left">{text}</p>
-            )}
-      </div>
+      <pre className="font-mono text-sm leading-relaxed whitespace-pre">{text}</pre>
     </div>
   );
 }
